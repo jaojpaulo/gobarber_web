@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useState, useContext } from 'react';
+import React, { createContext, useCallback, useContext, useState } from 'react';
 import api from '../services/apiClient';
 
 interface User {
@@ -25,12 +25,14 @@ interface AuthContextData {
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
-export const AuthProvider: React.FC = ({ children }) => {
+const AuthProvider: React.FC = ({ children }) => {
   const [data, setData] = useState<AuthState>(() => {
     const token = localStorage.getItem('@GoBarber:token');
     const user = localStorage.getItem('@GoBarber:user');
 
     if (token && user) {
+      api.defaults.headers.authorization = `Bearer ${token}`;
+
       return { token, user: JSON.parse(user) };
     }
 
@@ -42,10 +44,13 @@ export const AuthProvider: React.FC = ({ children }) => {
       email,
       password,
     });
+
     const { token, user } = response.data;
 
     localStorage.setItem('@GoBarber:token', token);
     localStorage.setItem('@GoBarber:user', JSON.stringify(user));
+
+    api.defaults.headers.authorization = `Bearer ${token}`;
 
     setData({ token, user });
   }, []);
@@ -74,4 +79,4 @@ function useAuth(): AuthContextData {
   return context;
 }
 
-export { useAuth };
+export { AuthProvider, useAuth };
